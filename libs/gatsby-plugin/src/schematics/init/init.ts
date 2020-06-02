@@ -51,7 +51,7 @@ export default function(schema: Schema) {
     setDefault(),
     addDepsToPackageJson(
       {
-        gatsby: gatsbyVersion,
+        'gatsby': gatsbyVersion,
         'gatsby-image': gatsbyImageVersion,
         'gatsby-plugin-manifest': gatsbyPluginManifestVersion,
         'gatsby-plugin-offline': gatsbyPluginOfflineVersion,
@@ -66,7 +66,6 @@ export default function(schema: Schema) {
         'gatsby-plugin-typescript': gatsbyPluginTypescript
       },
       {
-        '@nrwl/gatsby': nxVersion,
         '@angular-devkit/schematics': nxVersion,
         '@nrwl/react': nxVersion,
         'prettier': prettierVersion,

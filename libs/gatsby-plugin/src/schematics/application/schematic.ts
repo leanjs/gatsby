@@ -1,6 +1,17 @@
-import { apply, applyTemplates, chain, mergeWith, move, Rule, url } from '@angular-devkit/schematics';
 import {
-  addProjectToNxJsonInTree,
+  apply,
+  applyTemplates,
+  chain,
+  mergeWith,
+  move,
+  Rule,
+  url,
+  SchematicContext,
+  Tree
+} from '@angular-devkit/schematics';
+
+import {
+  addProjectToNxJsonInTree, formatFiles,
   names,
   offsetFromRoot,
   projectRootDir,
@@ -8,7 +19,7 @@ import {
   toFileName,
   updateWorkspaceInTree
 } from '@nrwl/workspace';
-import * as path from 'path';
+
 import init from '../init/init';
 import { GatsbyPluginSchematicSchema } from './schema';
 
@@ -68,7 +79,9 @@ export default function(options: GatsbyPluginSchematicSchema): Rule {
       tags: normalizedOptions.parsedTags
     }),
     createApplicationFiles(normalizedOptions),
-    addPrettierIgnoreEntry(normalizedOptions)
+    addPrettierIgnoreEntry(normalizedOptions),
+    addGitIgnoreEntry(normalizedOptions),
+    formatFiles()
   ]);
 }
 
@@ -98,17 +111,26 @@ function addProject(options: NormalizedSchema): Rule {
   });
 }
 
-// function addPrettierIgnoreEntry(options: MyAppSchema) {
-//  return (tree: Tree, context: SchematicContext) => {
-
-function addPrettierIgnoreEntry(options) {
-  return (tree, context) => {
+function addPrettierIgnoreEntry(options: NormalizedSchema) {
+  return (tree: Tree, context: SchematicContext) => {
     let prettierIgnoreFile = tree.read('.prettierignore')?.toString('utf-8');
     if (prettierIgnoreFile) {
-      prettierIgnoreFile = prettierIgnoreFile + `\n/apps/${options.projectName}/.cache\n/apps/${options.projectName}/public\n`;
+      prettierIgnoreFile = prettierIgnoreFile + `\n/apps/${options.projectName}/node_modules\n/apps/${options.projectName}/public\n/apps/${options.projectName}/.cache\n`;
       tree.overwrite('.prettierignore', prettierIgnoreFile);
     } else {
       context.logger.warn(`Couldn't find .prettierignore file to update`);
+    }
+  };
+}
+
+function addGitIgnoreEntry(options: NormalizedSchema) {
+  return (tree: Tree, context: SchematicContext) => {
+    let gitIgnoreFile = tree.read('.gitignore')?.toString('utf-8');
+    if (gitIgnoreFile) {
+      gitIgnoreFile = gitIgnoreFile + `\n/apps/${options.projectName}/node_modules\n/apps/${options.projectName}/public\n/apps/${options.projectName}/.cache\n`;
+      tree.overwrite('.gitignore', gitIgnoreFile);
+    } else {
+      context.logger.warn(`Couldn't find .gitignore file to update`);
     }
   };
 }
