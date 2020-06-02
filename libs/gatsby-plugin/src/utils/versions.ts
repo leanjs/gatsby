@@ -14,3 +14,4 @@ export const reactDomVersion = '16.12.0';
 export const reactHelmetVersion = '5.2.1';
 export const prettierVersion = '1.19.1';
 export const gatsbyPluginTypescript = '2.4.0';
+export const babelPluginModuleResolver = '4.0.0';

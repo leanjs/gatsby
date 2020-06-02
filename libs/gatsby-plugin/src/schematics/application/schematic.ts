@@ -1,12 +1,4 @@
-import {
-  apply,
-  applyTemplates,
-  chain,
-  mergeWith,
-  move,
-  Rule,
-  url
-} from '@angular-devkit/schematics';
+import { apply, applyTemplates, chain, mergeWith, move, Rule, url } from '@angular-devkit/schematics';
 import {
   addProjectToNxJsonInTree,
   names,
@@ -14,14 +6,12 @@ import {
   projectRootDir,
   ProjectType,
   toFileName,
-  updateWorkspace
+  updateWorkspaceInTree
 } from '@nrwl/workspace';
+import * as path from 'path';
 import init from '../init/init';
 import { GatsbyPluginSchematicSchema } from './schema';
 
-/**
- * Depending on your needs, you can change this to either `Library` or `Application`
- */
 const projectType = ProjectType.Application;
 
 interface NormalizedSchema extends GatsbyPluginSchematicSchema {
@@ -73,28 +63,52 @@ export default function(options: GatsbyPluginSchematicSchema): Rule {
       ...options,
       skipFormat: true
     }),
-    updateWorkspace(workspace => {
-      const project = workspace.projects
-        .add({
-          name: normalizedOptions.projectName,
-          root: normalizedOptions.projectRoot,
-          sourceRoot: `${normalizedOptions.projectRoot}/src`,
-          projectType
-        });
-
-      project.targets.add({
-        name: 'build',
-        builder: '@nrwl/gatsby:build'
-      });
-
-      project.targets.add({
-        name: 'develop',
-        builder: '@nrwl/gatsby:develop'
-      });
-    }),
+    addProject(normalizedOptions),
     addProjectToNxJsonInTree(normalizedOptions.projectName, {
       tags: normalizedOptions.parsedTags
     }),
-    createApplicationFiles(normalizedOptions)
+    createApplicationFiles(normalizedOptions),
+    addPrettierIgnoreEntry(normalizedOptions)
   ]);
+}
+
+function addProject(options: NormalizedSchema): Rule {
+  return updateWorkspaceInTree(json => {
+    const architect: { [key: string]: any } = {};
+
+    architect.build = {
+      builder: '@nrwl/gatsby:build'
+    };
+
+    architect.serve = {
+      builder: '@nrwl/gatsby:develop'
+    };
+
+    json.projects[options.projectName] = {
+      root: options.projectRoot,
+      sourceRoot: `${options.projectRoot}/src`,
+      projectType,
+      schematics: {},
+      architect
+    };
+
+    json.defaultProject = json.defaultProject || options.projectName;
+
+    return json;
+  });
+}
+
+// function addPrettierIgnoreEntry(options: MyAppSchema) {
+//  return (tree: Tree, context: SchematicContext) => {
+
+function addPrettierIgnoreEntry(options) {
+  return (tree, context) => {
+    let prettierIgnoreFile = tree.read('.prettierignore')?.toString('utf-8');
+    if (prettierIgnoreFile) {
+      prettierIgnoreFile = prettierIgnoreFile + `\n/apps/${options.projectName}/.cache\n/apps/${options.projectName}/public\n`;
+      tree.overwrite('.prettierignore', prettierIgnoreFile);
+    } else {
+      context.logger.warn(`Couldn't find .prettierignore file to update`);
+    }
+  };
 }
