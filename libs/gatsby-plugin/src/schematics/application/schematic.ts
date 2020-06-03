@@ -59,8 +59,7 @@ function createApplicationFiles(options: NormalizedSchema): Rule {
     apply(url(`./files`), [
       applyTemplates({
         ...options,
-        ...names(options.name),
-        offsetFromRoot: offsetFromRoot(options.projectRoot)
+        ...names(options.name)
       }),
       move(options.projectRoot)
     ])
